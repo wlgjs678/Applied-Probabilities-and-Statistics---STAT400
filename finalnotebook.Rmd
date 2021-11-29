@@ -1,0 +1,7 @@
+---
+title: "Final Submission Notebook"
+output: html_notebook
+---
+
+**Introduction**:
+  Throughout the COVID-19 pandemic, different countries have responded in various ways. Some countries have vaccine mandates, some have new variants, and there are many different vaccines. The topic of interest in this research is centered around the latter, researching the different types of vaccines for the different countries and in turn, the number of breakthrough cases per vaccine. This will allow us to determine if there is any one vaccine that is most effective, or if any countries have different vaccines with the same effectiveness. By studying the link between breakthrough cases and vaccine types, we hope to determine a trend that could be useful in combating future COVID-19 variants. To study this phenomenon, we will be using the Kaggle Vaccine Progress database, which can be found at: https://www.kaggle.com/gpreda/covid-world-vaccination-progress
