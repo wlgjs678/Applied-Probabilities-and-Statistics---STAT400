@@ -1,0 +1,125 @@
+---
+title: "Covid Data Visualization"
+author: "Kendall Pfeifer, Yiqiao Zhu, Jiheon Kim"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes  
+  pdf_document:
+    toc: yes
+---
+
+# Introduction
+Throughout the COVID-19 pandemic, different countries have responded in various ways. Some countries have vaccine mandates, some have new variants, and there are many different vaccines. The topic of interest in this research is centered around the latter, researching the different types of vaccines for the different countries and in turn, the number of breakthrough cases per vaccine. This will allow us to determine if there is any one vaccine that is most effective, or if any countries have different vaccines with the same effectiveness. By studying the link between breakthrough cases and vaccine types, we hope to determine a trend that could be useful in combating future COVID-19 variants. To study this phenomenon, we will be using the Kaggle Vaccine Progress database, which can be found at: https://www.kaggle.com/gpreda/covid-world-vaccination-progress
+``` {r, message=TRUE, warning=TRUE, include=FALSE, echo=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+library(gganimate)
+library(gifski)
+library(png)
+library(ggrepel)
+library(scales)
+library(gapminder)
+library(data.table)
+
+path_data1 <- "./country_vaccinations.csv"
+path_data2 <- "./country_vaccinations_by_manufacturer.csv"
+path_data3 <- "./time_series_covid_19_confirmed.csv"
+path_data4 <- "./time_series_covid_19_confirmed_US.csv"
+path_data5 <- "./time_series_covid_19_deaths.csv"
+path_data6 <- "./time_series_covid_19_deaths_US.csv"
+vaccinations_by_country <- read.csv(path_data1)
+vaccinations_by_manufacturer <- read.csv(path_data2)
+confirmed_cases <- read.csv(path_data3)
+confirmed_cases_us <- read.csv(path_data4)
+deaths <- read.csv(path_data5)
+deaths_us <- read.csv(path_data6)
+```
+
+# Analysis
+## COVID-19 Vaccination Progress
+First of all, we are providing the graphs that show the COVID-19 vaccination progress in the US, Germany, Ecuador, and Chile; several countries other than the US have been involved in the experiment to help increase diversity and accuracy. The first two countries, the US and Germany, have most of their vaccinated population distributed with Pfizer, whereas the last two countries, Ecuador and Chile, have their vaccinated population distributed with Sinovac.
+
+``` {r, echo=FALSE}
+vaccination = vaccinations_by_country %>% select("daily_vaccinations")
+
+date = vaccinations_by_country %>% select("date")
+
+
+country_us = vaccinations_by_country %>% filter(country == "United States")
+
+date_us = country_us %>% select("date")
+
+vac_us = country_us %>% select("daily_vaccinations")
+date_us <- as.data.frame(t(date_us))
+```
+
+``` {r, echo=FALSE}
+country_ger = vaccinations_by_country %>% filter(country == "Germany")
+```
+
+``` {r, echo=FALSE}
+country_ecu = vaccinations_by_country %>% filter(country == "Ecuador")
+```
+
+``` {r, echo=FALSE}
+country_chile = vaccinations_by_country %>% filter(country == "Chile")
+```
+
+``` {r, echo=FALSE}
+options(scipen=999)
+par(mfrow=c(2,2))
+plot(country_us$people_vaccinated, xlim = c(0, 200), ylim = c(0, 300000000), xlab="Days", ylab="Vaccines", col="green", main="US COVID-19 Vaccination Progress \n (58.3% of the vaccinated population are Pfizer) \n 12/27/2020 - 05/29/2021")
+plot(country_ger$people_vaccinated, xlim = c(0, 200), ylim = c(0, 80000000), xlab="Days", ylab="Vaccines", col="green", main="Germany COVID-19 Vaccination Progress \n (78.3% of the vaccinated population are Pfizer) \n 12/13/2020 - 05/29/2021")
+plot(country_ecu$people_vaccinated, xlim = c(0, 200), ylim = c(0, 25000000), xlab="Days", ylab="Vaccines", col="green", main="Ecuador COVID-19 Vaccination Progress \n (58.6% of the vaccinated population are Sinovac) \n 01/09/2021 - 05/29/2021")
+plot(country_chile$people_vaccinated, xlim = c(0, 200), ylim = c(0, 25000000), xlab="Days", ylab="Vaccines", col="green", main="Chile COVID-19 Vaccination Progress \n (84.3% of the vaccinated population are Sinovac) \n 12/24/2020 - 05/29/2021")
+```
+
+## COVID-19 Cases
+Here, we will determine whether the COVID-19 vaccines are effective in preventing infection and disease by comparing the number of COVID-19 cases and the number of vaccines distributed in each country. If it is determined to be effective, we will further investigate to find out whether the efficacy of different types of vaccines would affect the actual infection and disease rates. The following graphs will show the number of confirmed COVID-19 cases of the same time period that the vaccines have been distributed. 
+
+``` {r, echo=FALSE}
+cases_us = confirmed_cases_us %>% select("Country_Region" | starts_with("X"))
+cases_us = cases_us %>% filter(Country_Region == "US")
+cases_us = cases_us %>% group_by(Country_Region) %>% summarise(across(starts_with("X"), sum))
+setDT(cases_us)
+cases_us = cases_us %>% melt(cases_us, id=c("Country_Region"), measure=patterns("^X"), value.name="Cases", variable.name="Date")
+```
+
+``` {r, echo=FALSE}
+cases_ger = confirmed_cases %>% select("Country" | starts_with("X"))
+cases_ger = cases_ger %>% filter(Country == "Germany")
+cases_ger = cases_ger %>% group_by(Country) %>% summarise(across(starts_with("X"), sum))
+setDT(cases_ger)
+cases_ger = cases_ger %>% melt(cases_ger, id=c("Country"), measure=patterns("^X"), value.name="Cases", variable.name="Date")
+```
+
+``` {r, echo=FALSE}
+cases_ecu = confirmed_cases %>% select("Country" | starts_with("X"))
+cases_ecu = cases_ecu %>% filter(Country == "Ecuador")
+cases_ecu = cases_ecu %>% group_by(Country) %>% summarise(across(starts_with("X"), sum))
+setDT(cases_ecu)
+cases_ecu = cases_ecu %>% melt(cases_ecu, id=c("Country"), measure=patterns("^X"), value.name="Cases", variable.name="Date")
+```
+
+``` {r, echo=FALSE}
+cases_chi = confirmed_cases %>% select("Country" | starts_with("X"))
+cases_chi = cases_chi %>% filter(Country == "Chile")
+cases_chi = cases_chi %>% group_by(Country) %>% summarise(across(starts_with("X"), sum))
+setDT(cases_chi)
+cases_chi = cases_chi %>% melt(cases_chi, id=c("Country"), measure=patterns("^X"), value.name="Cases", variable.name="Date")
+```
+
+``` {r, echo=FALSE}
+par(mfrow=c(2,2))
+plot(cases_us$Cases, xlim = c(240, 490), ylim = c(0, 40000000), xlab="Days", ylab="COVID-19 Cases", col="red", main="US COVID-19 Cases \n 12/27/2020 - 05/29/2021")
+plot(cases_ger$Cases, xlim = c(220, 490), ylim = c(0, 5000000), xlab="Days", ylab="COVID-19 Cases", col="red", main="Germany COVID-19 Cases \n 12/13/2020 - 05/29/2021")
+plot(cases_ecu$Cases, xlim = c(270, 490), ylim = c(0, 1000000), xlab="Days", ylab="COVID-19 Cases", col="red", main="Ecuador COVID-19 Cases \n 01/09/2020 - 05/29/2021")
+plot(cases_chi$Cases, xlim = c(240, 490), ylim = c(0, 2000000), xlab="Days", ylab="COVID-19 Cases", col="red", main="Chile COVID-19 Cases \n 12/24/2020 - 05/29/2021")
+```
+
+Comparing the datasets of COVID-19 Vaccination Progress and COVID-19 Cases, it does appear that there is a relationship between the number of vaccines and the number of COVID-19 cases. According to these datasets and considering unexpected events such as mass infections, the increasing rate of infection seem to slow down overall after a few weeks vaccines were distributed. Also, the Pfizer vaccine seems to work more effectively than the Sinovac vaccine.
+
+# Conclusion
